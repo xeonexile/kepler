@@ -13,7 +13,6 @@ type SinkImpl struct {
 type SinkFunction func(msg Message)
 
 func (s *SinkImpl) In(input <-chan Message) {
-
 	go func() {
 		for msg := range input {
 			s.action(msg)

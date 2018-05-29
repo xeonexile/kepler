@@ -7,7 +7,7 @@ import (
 )
 
 func TestRoutesMapWithAllways(t *testing.T) {
-	routes := NewRoutesMap()
+	routes := NewRouter()
 
 	routes.Add(NewRoute("a", Allways))
 	routes.Add(NewRoute("a", Allways))
@@ -25,7 +25,7 @@ func TestRoutesMapWithAllways(t *testing.T) {
 }
 
 func TestRoutesMap(t *testing.T) {
-	routes := NewRoutesMap()
+	routes := NewRouter()
 
 	routes.Add(NewRoute("a", func(m Message) bool { return m.Value().(int) == 0 }))
 	routes.Add(NewRoute("a", func(m Message) bool { return m.Value().(int) == 0 }))

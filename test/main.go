@@ -21,24 +21,26 @@ func main() {
 		}
 	})
 
-	p := kepler.NewPipe("mux", func(m kepler.Message) kepler.Message {
+	mux := kepler.NewPipe("mux", func(m kepler.Message) kepler.Message {
 		return m
 	})
 
 	t1 := kepler.NewSink("t", func(m kepler.Message) {
-		log.Println("t1: " + m.String())
+		log.Println("t1>: " + m.String())
 		time.Sleep(4 * time.Second)
+		log.Println("t1<: " + m.String())
 	})
 
 	t2 := kepler.NewSink("t", func(m kepler.Message) {
-		log.Println("t2: " + m.String())
+		log.Println("t2>: " + m.String())
 		time.Sleep(8 * time.Second)
+		log.Println("t2<: " + m.String())
 	})
 
-	s.LinkTo(p, kepler.Allways)
+	s.LinkTo(mux, kepler.Allways)
 	//p.LinkTo(t2, func(m kepler.Message) bool { return m.Value().(int) > 5 })
-	p.LinkTo(t2, kepler.Allways)
-	p.LinkTo(t1, kepler.Allways)
+	mux.LinkTo(t2, kepler.Allways)
+	mux.LinkTo(t1, kepler.Allways)
 
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Print("Enter text: ")

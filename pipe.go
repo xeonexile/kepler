@@ -1,7 +1,7 @@
 package kepler
 
 import (
-	"reflect"
+	"time"
 )
 
 type Pipe interface {
@@ -12,7 +12,7 @@ type Pipe interface {
 type PipeImpl struct {
 	name   string
 	action PipeFunction
-	routes *RoutesMap
+	router *Router
 }
 
 type PipeFunction func(in Message) Message
@@ -24,7 +24,19 @@ func (p *PipeImpl) Out(route Route) <-chan Message {
 func (p *PipeImpl) In(input <-chan Message) {
 	go func() {
 		for msg := range input {
-			reflect.Select(p.routes.Cases(p.action(msg)))
+			//reflect.Select(p.routes.Cases(p.action(msg)))
+			m := p.action(msg)
+			if m != nil {
+				c := -1
+				for {
+					c = p.router.Send(m, p.router.ByCond(m))
+					if c == -1 {
+						time.Sleep(10 * time.Millisecond)
+					} else {
+						break
+					}
+				}
+			}
 		}
 	}()
 }
@@ -39,11 +51,11 @@ func (p *PipeImpl) LinkTo(sink Sink, cond RouteCondition) {
 }
 
 func NewPipe(name string, action PipeFunction) Pipe {
-	return &PipeImpl{name: name, action: action, routes: NewRoutesMap()}
+	return &PipeImpl{name: name, action: action, router: NewRouter()}
 }
 
 func (p *PipeImpl) addRoute(name string, rc RouteCondition) (res *route) {
 	res = NewRoute(name, rc)
-	p.routes.Add(res)
+	p.router.Add(res)
 	return res
 }
