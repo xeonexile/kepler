@@ -6,30 +6,29 @@ import (
 
 // Spring of outgong messages
 type Spring interface {
-	Out(Route) <-chan Message
+	Out(out chan Message) <-chan Message
 	LinkTo(Sink, RouteCondition)
 }
 
-func (s *springImpl) Out(route Route) <-chan Message {
+func (s *springImpl) Out(o chan Message) <-chan Message {
 	var wg sync.WaitGroup
 	wg.Add(1)
 
 	go func() {
-		s.action(route.Buff())
+		s.action(o)
 		wg.Done()
 	}()
 
 	go func() {
 		wg.Wait()
-		close(route.Buff())
+		close(o)
 	}()
 
-	return route.Buff()
+	return o
 }
 
 func (s *springImpl) LinkTo(sink Sink, cond RouteCondition) {
-	route := s.addRoute(sink.Name(), cond)
-	sink.In(s.Out(route))
+	sink.In(s.Out(s.routes.AddRoute(sink.Name(), cond)))
 }
 
 // SpringFunction out generator function
@@ -43,11 +42,5 @@ func NewSpring(name string, action SpringFunction) Spring {
 type springImpl struct {
 	name   string
 	action SpringFunction
-	routes *Router
-}
-
-func (s *springImpl) addRoute(name string, rc RouteCondition) (res *route) {
-	res = NewRoute(name, rc)
-	s.routes.Add(res)
-	return res
+	routes Router
 }
