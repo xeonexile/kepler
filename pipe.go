@@ -5,19 +5,22 @@ type Pipe interface {
 	Sink
 }
 
-type PipeImpl struct {
+type pipeImpl struct {
 	name   string
 	action PipeFunction
 	router Router
 }
 
+// PipeFunction defines transform func that will be performed within block
 type PipeFunction func(in Message) Message
 
-func (p *PipeImpl) Out(buf chan Message) <-chan Message {
+// Out outgoing channel
+func (p *pipeImpl) Out(buf chan Message) <-chan Message {
 	return buf
 }
 
-func (p *PipeImpl) In(input <-chan Message) {
+// In incomming channel
+func (p *pipeImpl) In(input <-chan Message) {
 	go func() {
 		for msg := range input {
 			m := p.action(msg)
@@ -28,14 +31,17 @@ func (p *PipeImpl) In(input <-chan Message) {
 	}()
 }
 
-func (p *PipeImpl) Name() string {
+// Name of this pipe
+func (p *pipeImpl) Name() string {
 	return p.name
 }
 
-func (p *PipeImpl) LinkTo(sink Sink, cond RouteCondition) {
+// LinkTo add new conditional link
+func (p *pipeImpl) LinkTo(sink Sink, cond RouteCondition) {
 	sink.In(p.Out(p.router.AddRoute(sink.Name(), cond)))
 }
 
+// NewPipe creates new instance of pipe with defined transform action
 func NewPipe(name string, action PipeFunction) Pipe {
-	return &PipeImpl{name: name, action: action, router: NewRouter()}
+	return &pipeImpl{name: name, action: action, router: NewRouter()}
 }

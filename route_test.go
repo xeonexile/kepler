@@ -7,43 +7,40 @@ import (
 )
 
 func TestRoutesMapWithAllways(t *testing.T) {
-	routes := NewRouter()
+	routes := NewRouter().(*router)
 
-	routes.Add(NewRoute("a", Allways))
-	routes.Add(NewRoute("a", Allways))
+	routes.AddRoute("a", Allways)
+	routes.AddRoute("a", Allways)
 
-	routes.Add(NewRoute("b", func(m Message) bool { return m.Value().(int) == 1 }))
-	routes.Add(NewRoute("b", func(m Message) bool { return m.Value().(int) == 1 }))
-	routes.Add(NewRoute("b", func(m Message) bool { return m.Value().(int) == 1 }))
+	routes.AddRoute("b", func(m Message) bool { return m.Value().(int) == 1 })
+	routes.AddRoute("b", func(m Message) bool { return m.Value().(int) == 1 })
+	routes.AddRoute("b", func(m Message) bool { return m.Value().(int) == 1 })
 
 	assert.Equal(t, 2, len(routes.routes))
-	assert.Equal(t, 2, len(routes.ByName("a")))
-	assert.Equal(t, 2, len(routes.ByCond(NewValueMessage("a", 0))))
+	assert.Equal(t, 2, len(routes.byName("a")))
+	assert.Equal(t, 2, len(routes.byCond(NewValueMessage("a", 0))))
 
-	assert.Equal(t, 3, len(routes.ByName("b")))
-	assert.Equal(t, 3, len(routes.ByCond(NewValueMessage("b", 1))))
+	assert.Equal(t, 3, len(routes.byName("b")))
+	assert.Equal(t, 3, len(routes.byCond(NewValueMessage("b", 1))))
 }
 
 func TestRoutesMap(t *testing.T) {
-	routes := NewRouter()
+	routes := NewRouter().(*router)
 
-	routes.Add(NewRoute("a", func(m Message) bool { return m.Value().(int) == 0 }))
-	routes.Add(NewRoute("a", func(m Message) bool { return m.Value().(int) == 0 }))
+	routes.AddRoute("a", func(m Message) bool { return m.Value().(int) == 0 })
+	routes.AddRoute("a", func(m Message) bool { return m.Value().(int) == 0 })
 
-	routes.Add(NewRoute("b", func(m Message) bool { return m.Value().(int) == 1 }))
-	routes.Add(NewRoute("b", func(m Message) bool { return m.Value().(int) == 1 }))
-	routes.Add(NewRoute("b", func(m Message) bool { return m.Value().(int) == 1 }))
+	routes.AddRoute("b", func(m Message) bool { return m.Value().(int) == 1 })
+	routes.AddRoute("b", func(m Message) bool { return m.Value().(int) == 1 })
+	routes.AddRoute("b", func(m Message) bool { return m.Value().(int) == 1 })
 
 	assert.Equal(t, 2, len(routes.routes))
-	assert.Equal(t, 0, len(routes.ByName("c")))
-	assert.Equal(t, 0, len(routes.ByCond(NewValueMessage("c", -1))))
-	assert.Equal(t, 0, len(routes.Cases(NewValueMessage("c", -1))))
+	assert.Equal(t, 0, len(routes.byName("c")))
+	assert.Equal(t, 0, len(routes.byCond(NewValueMessage("c", -1))))
 
-	assert.Equal(t, 2, len(routes.ByName("a")))
-	assert.Equal(t, 2, len(routes.ByCond(NewValueMessage("a", 0))))
-	assert.Equal(t, 2, len(routes.Cases(NewValueMessage("a", 0))))
+	assert.Equal(t, 2, len(routes.byName("a")))
+	assert.Equal(t, 2, len(routes.byCond(NewValueMessage("a", 0))))
 
-	assert.Equal(t, 3, len(routes.ByName("b")))
-	assert.Equal(t, 3, len(routes.ByCond(NewValueMessage("b", 1))))
-	assert.Equal(t, 3, len(routes.Cases(NewValueMessage("b", 1))))
+	assert.Equal(t, 3, len(routes.byName("b")))
+	assert.Equal(t, 3, len(routes.byCond(NewValueMessage("b", 1))))
 }
