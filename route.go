@@ -2,6 +2,7 @@ package kepler
 
 import (
 	"log"
+	"reflect"
 )
 
 type Router interface {
@@ -95,7 +96,7 @@ func (r *router) Send(m Message) int {
 	case 7:
 		c = send7(m, routes[0].Buff(), routes[1].Buff(), routes[2].Buff(), routes[3].Buff(), routes[4].Buff(), routes[5].Buff(), routes[6].Buff())
 	default:
-		return -2
+		c = sendDefault(m, routes)
 	}
 
 	if c == -1 {
@@ -127,6 +128,20 @@ func (r *router) byCond(m Message) []Route {
 		}
 	}
 	return empty
+}
+
+func sendDefault(m Message, in []Route) int {
+	cases := make([]reflect.SelectCase, len(in))
+
+	for i, c := range in {
+		cases[i] = reflect.SelectCase{
+			Dir:  reflect.SelectSend,
+			Chan: reflect.ValueOf(c.Buff()),
+			Send: reflect.ValueOf(m)}
+	}
+
+	idx, _, _ := reflect.Select(cases)
+	return idx
 }
 
 func send1(m Message, in ...chan Message) int {

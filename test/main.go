@@ -30,37 +30,49 @@ func main() {
 		return m
 	})
 
-	t1 := kepler.NewSink("t", func(m kepler.Message) {
-		log.Println("t1_1>: " + m.String())
-		time.Sleep(4 * time.Second)
-		log.Println("t1_1<: " + m.String())
-	})
+	// t1 := kepler.NewSink("t", func(m kepler.Message) {
+	// 	log.Println("t1_1>: " + m.String())
+	// 	time.Sleep(4 * time.Second)
+	// 	log.Println("t1_1<: " + m.String())
+	// })
 
-	t2 := kepler.NewSink("t", func(m kepler.Message) {
-		log.Println("t1_2>: " + m.String())
-		time.Sleep(8 * time.Second)
-		log.Println("t1_2<: " + m.String())
-	})
+	// t2 := kepler.NewSink("t", func(m kepler.Message) {
+	// 	log.Println("t1_2>: " + m.String())
+	// 	time.Sleep(8 * time.Second)
+	// 	log.Println("t1_2<: " + m.String())
+	// })
 
-	t3 := kepler.NewSink("t3", func(m kepler.Message) {
-		log.Println("t3_1>: " + m.String())
-		time.Sleep(10 * time.Second)
-		log.Println("t3_1<: " + m.String())
-	})
+	var even [3]kepler.Sink
+	for i, _ := range even {
+		name := fmt.Sprintf("even_%v", i)
+		even[i] = kepler.NewSink("even", func(m kepler.Message) {
+			log.Println(name + "> " + m.String())
+			time.Sleep(10 * time.Second)
+			log.Println(name + "< " + m.String())
+		})
 
-	t4 := kepler.NewSink("t3", func(m kepler.Message) {
-		log.Println("t3_2>: " + m.String())
-		time.Sleep(10 * time.Second)
-		log.Println("t3_2<: " + m.String())
-	})
+		mux.LinkTo(even[i], func(m kepler.Message) bool { return m.Value().(int)%2 == 0 })
+	}
+
+	var odd [8]kepler.Sink
+	for i, _ := range odd {
+		name := fmt.Sprintf("odd_%v", i)
+		odd[i] = kepler.NewSink("odd", func(m kepler.Message) {
+			log.Println(name + "> " + m.String())
+			time.Sleep(10 * time.Second)
+			log.Println(name + "< " + m.String())
+		})
+
+		mux.LinkTo(odd[i], func(m kepler.Message) bool { return m.Value().(int)%2 != 0 })
+	}
 
 	s.LinkTo(mux, kepler.Allways)
 	//p.LinkTo(t2, func(m kepler.Message) bool { return m.Value().(int) > 5 })
-	mux.LinkTo(t3, func(m kepler.Message) bool { return m.Value().(int)%3 == 0 })
-	mux.LinkTo(t4, func(m kepler.Message) bool { return m.Value().(int)%3 == 0 })
+	// mux.LinkTo(t3, func(m kepler.Message) bool { return m.Value().(int)%3 == 0 })
+	// mux.LinkTo(t4, func(m kepler.Message) bool { return m.Value().(int)%3 == 0 })
 
-	mux.LinkTo(t2, func(m kepler.Message) bool { return m.Value().(int)%3 != 0 })
-	mux.LinkTo(t1, func(m kepler.Message) bool { return m.Value().(int)%3 != 0 })
+	// mux.LinkTo(t2, func(m kepler.Message) bool { return m.Value().(int)%3 != 0 })
+	// mux.LinkTo(t1, func(m kepler.Message) bool { return m.Value().(int)%3 != 0 })
 	// mux.LinkTo(t2, kepler.Allways)
 	// mux.LinkTo(t1, kepler.Allways)
 
