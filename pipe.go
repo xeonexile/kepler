@@ -6,9 +6,10 @@ type Pipe interface {
 }
 
 type pipeImpl struct {
-	name   string
-	action PipeFunction
-	router Router
+	name      string
+	action    PipeFunction
+	router    Router
+	broadcast bool
 }
 
 // PipeFunction defines transform func that will be performed within block
@@ -43,5 +44,9 @@ func (p *pipeImpl) LinkTo(sink Sink, cond RouteCondition) {
 
 // NewPipe creates new instance of pipe with defined transform action
 func NewPipe(name string, action PipeFunction) Pipe {
-	return &pipeImpl{name: name, action: action, router: NewRouter()}
+	return &pipeImpl{name: name, action: action, router: NewRouter(false)}
+}
+
+func NewBroadcastPipe(name string, action PipeFunction) Pipe {
+	return &pipeImpl{name: name, action: action, router: NewRouter(true)}
 }

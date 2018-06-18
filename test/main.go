@@ -26,7 +26,8 @@ func main() {
 		}
 	})
 
-	mux := kepler.NewPipe("mux", func(m kepler.Message) kepler.Message {
+	mux := kepler.NewBroadcastPipe("mux", func(m kepler.Message) kepler.Message {
+		log.Println("mux: " + m.String())
 		return m
 	})
 

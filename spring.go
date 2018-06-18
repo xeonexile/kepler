@@ -36,7 +36,7 @@ type SpringFunction func(out chan<- Message)
 
 // NewSpring creates new Spring
 func NewSpring(name string, action SpringFunction) Spring {
-	return &springImpl{name: name, action: action, routes: NewRouter()}
+	return &springImpl{name: name, action: action, routes: NewRouter(false)}
 }
 
 type springImpl struct {

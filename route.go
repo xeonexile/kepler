@@ -3,6 +3,7 @@ package kepler
 import (
 	"log"
 	"reflect"
+	"sync"
 )
 
 type Router interface {
@@ -43,17 +44,22 @@ func NewRoute(name string, rc func(m Message) bool) Route {
 type RouteCondition func(m Message) bool
 
 type router struct {
-	routes map[string][]Route
-	ring   int
+	mx          sync.Mutex
+	routes      map[string][]Route
+	ring        int
+	broadcaster bool
 }
 
 // NewRouter creates new Router instance
-func NewRouter() Router {
-	return &router{make(map[string][]Route), 0}
+func NewRouter(broadcaster bool) Router {
+	return &router{sync.Mutex{}, make(map[string][]Route), 0, broadcaster}
 }
 
 // Add route to map by its name
 func (r *router) AddRoute(name string, rc func(m Message) bool) chan Message {
+	r.mx.Lock()
+	defer r.mx.Unlock()
+
 	route := NewRoute(name, rc)
 	var (
 		b  []Route
@@ -76,8 +82,26 @@ var (
 	empty = make([]Route, 0)
 )
 
+func (r *router) broadcast(m Message) int {
+	//r.mx.Lock()
+	routes := r.byCond(m)
+	//r.mx.Unlock()
+
+	for _, rt := range routes {
+		rt.Buff() <- m
+	}
+	return 1
+}
+
 // Send message to first free Cond aplicable route
 func (r *router) Send(m Message) int {
+	r.mx.Lock()
+	defer r.mx.Unlock()
+
+	if r.broadcaster {
+		return r.broadcast(m)
+	}
+
 	c := -1
 	routes := r.byCond(m)
 	switch len(routes) {
