@@ -1,46 +1,45 @@
 package kepler
 
 import (
-	"sync"
+	"context"
 )
 
 // Spring of outgong messages
 type Spring interface {
-	Out(out chan Message) <-chan Message
-	LinkTo(Sink, RouteCondition)
+	Out(ctx context.Context, out chan Message) <-chan Message
+	LinkTo(Sink, RouteCondition) (closer func())
 }
 
-func (s *springImpl) Out(o chan Message) <-chan Message {
-	var wg sync.WaitGroup
-	wg.Add(1)
+func (s *springImpl) Out(ctx context.Context, o chan Message) <-chan Message {
 
 	go func() {
-		s.action(o)
-		wg.Done()
-	}()
-
-	go func() {
-		wg.Wait()
-		close(o)
+		s.action(ctx, o)
 	}()
 
 	return o
 }
 
-func (s *springImpl) LinkTo(sink Sink, cond RouteCondition) {
-	sink.In(s.Out(s.routes.AddRoute(sink.Name(), cond)))
+func (s *springImpl) LinkTo(sink Sink, cond RouteCondition) (closer func()) {
+	route := s.router.AddRoute(sink.Name(), cond)
+
+	//pass linked conext to Sink
+	inCtx, inClose := context.WithCancel(route.Ctx())
+	sink.In(inCtx, s.Out(route.Ctx(), route.Buff()))
+
+	//send signal to Sink and close original route
+	return func() { inClose(); route.Close() }
 }
 
 // SpringFunction out generator function
-type SpringFunction func(out chan<- Message)
+type SpringFunction func(ctx context.Context, out chan<- Message)
 
 // NewSpring creates new Spring
 func NewSpring(name string, action SpringFunction) Spring {
-	return &springImpl{name: name, action: action, routes: NewRouter(false)}
+	return &springImpl{name: name, action: action, router: NewRouter(false)}
 }
 
 type springImpl struct {
 	name   string
 	action SpringFunction
-	routes Router
+	router Router
 }

@@ -1,8 +1,13 @@
 package kepler
 
+import (
+	"context"
+	"log"
+)
+
 type Sink interface {
 	Name() string
-	In(input <-chan Message)
+	In(ctx context.Context, input <-chan Message)
 }
 
 type sinkImpl struct {
@@ -12,10 +17,19 @@ type sinkImpl struct {
 
 type SinkFunction func(msg Message)
 
-func (s *sinkImpl) In(input <-chan Message) {
+func (s *sinkImpl) In(ctx context.Context, input <-chan Message) {
 	go func() {
-		for msg := range input {
-			s.action(msg)
+		for {
+			select {
+			case msg := <-input:
+				if msg != nil {
+					s.action(msg)
+				}
+			case <-ctx.Done():
+				log.Println("Sink Done")
+				//TODO: propogate to attached
+				return
+			}
 		}
 	}()
 }

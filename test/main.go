@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -15,14 +16,27 @@ func main() {
 
 	log.Println("starting...")
 
-	s := kepler.NewSpring("range", func(c chan<- kepler.Message) {
+	s := kepler.NewSpring("range", func(ctx context.Context, c chan<- kepler.Message) {
+
 		for i := 0; i < 10; i++ {
-			c <- kepler.NewValueMessage("range", i)
+			select {
+			case <-ctx.Done():
+				log.Println("Done")
+				close(c)
+				return
+			case c <- kepler.NewValueMessage("range", i):
+			}
 		}
 
-		time.Sleep(20 * time.Second)
+		time.Sleep(10 * time.Second)
 		for i := 10; i < 20; i++ {
-			c <- kepler.NewValueMessage("range2", i)
+			select {
+			case <-ctx.Done():
+				log.Println("Done")
+				close(c)
+				return
+			case c <- kepler.NewValueMessage("range2", i):
+			}
 		}
 	})
 
@@ -48,7 +62,7 @@ func main() {
 		name := fmt.Sprintf("even_%v", i)
 		even[i] = kepler.NewSink("even", func(m kepler.Message) {
 			log.Println(name + "> " + m.String())
-			time.Sleep(10 * time.Second)
+			time.Sleep(3 * time.Second)
 			log.Println(name + "< " + m.String())
 		})
 
@@ -67,7 +81,10 @@ func main() {
 		mux.LinkTo(odd[i], func(m kepler.Message) bool { return m.Value().(int)%2 != 0 })
 	}
 
-	s.LinkTo(mux, kepler.Allways)
+	closeMux := s.LinkTo(mux, kepler.Allways)
+
+	time.Sleep(10 * time.Second)
+	closeMux()
 	//p.LinkTo(t2, func(m kepler.Message) bool { return m.Value().(int) > 5 })
 	// mux.LinkTo(t3, func(m kepler.Message) bool { return m.Value().(int)%3 == 0 })
 	// mux.LinkTo(t4, func(m kepler.Message) bool { return m.Value().(int)%3 == 0 })

@@ -1,26 +1,34 @@
 package kepler
 
 import (
+	"context"
 	"log"
 	"reflect"
 	"sync"
 )
 
 type Router interface {
-	AddRoute(name string, rc func(m Message) bool) chan Message
+	AddRoute(name string, rc func(m Message) bool) Route
+	RemoveRoute(Route)
 	Send(Message) int
+	Close()
 }
 
 type Route interface {
 	Name() string
 	Buff() chan Message
+	Ctx() context.Context
 	Cond() func(m Message) bool
+	Close()
 }
 
 type route struct {
-	name string
-	buff chan Message
-	cond func(m Message) bool
+	name   string
+	buff   chan Message
+	ctx    context.Context
+	cond   func(m Message) bool
+	router Router
+	cancel context.CancelFunc
 }
 
 func (r *route) Name() string {
@@ -31,13 +39,27 @@ func (r *route) Buff() chan Message {
 	return r.buff
 }
 
+func (r *route) Ctx() context.Context {
+	return r.ctx
+}
+
 func (r *route) Cond() func(m Message) bool {
 	return r.cond
 }
 
+func (r *route) Close() {
+	log.Println("Route Closing")
+	r.cancel()
+
+	r.router.RemoveRoute(r)
+	//close(r.buff)
+	log.Println("Route Closed")
+}
+
 // NewRoute creates new instance of named conditional Route
-func NewRoute(name string, rc func(m Message) bool) Route {
-	return &route{name, make(chan Message), rc}
+func newRoute(name string, rc func(m Message) bool, router Router) Route {
+	ctx, cancel := context.WithCancel(context.Background())
+	return &route{name, make(chan Message), ctx, rc, router, cancel}
 }
 
 // RouteCondition filtrates outgoing messages
@@ -56,11 +78,11 @@ func NewRouter(broadcaster bool) Router {
 }
 
 // Add route to map by its name
-func (r *router) AddRoute(name string, rc func(m Message) bool) chan Message {
+func (r *router) AddRoute(name string, rc func(m Message) bool) Route {
 	r.mx.Lock()
 	defer r.mx.Unlock()
 
-	route := NewRoute(name, rc)
+	route := newRoute(name, rc, r)
 	var (
 		b  []Route
 		ok bool
@@ -70,7 +92,37 @@ func (r *router) AddRoute(name string, rc func(m Message) bool) chan Message {
 	}
 	r.routes[route.Name()] = append(b, route)
 
-	return route.Buff()
+	return route
+}
+
+func (r *router) Close() {
+	// r.mx.Lock()
+	// defer r.mx.Unlock()
+
+	for _, rg := range r.routes {
+		for _, ri := range rg {
+			ri.Close()
+			//close channel since this method is called from Input
+			close(ri.Buff())
+		}
+	}
+}
+
+func (r *router) RemoveRoute(route Route) {
+	// r.mx.Lock()
+	// defer r.mx.Unlock()
+
+	if rg, ok := r.routes[route.Name()]; ok {
+		var nrg []Route
+		for _, v := range rg {
+			if v == route {
+				continue
+			} else {
+				nrg = append(nrg, v)
+			}
+		}
+		r.routes[route.Name()] = nrg
+	}
 }
 
 // Allways true condition
