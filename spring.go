@@ -33,6 +33,9 @@ func (s *springImpl) LinkTo(sink Sink, cond RouteCondition) (closer func()) {
 // SpringFunction out generator function
 type SpringFunction func(ctx context.Context, out chan<- Message)
 
+// UnmarshallFunction used to unmarshall spring input to
+type UnmarshallFunction func(in []byte) (Message, error)
+
 // NewSpring creates new Spring
 func NewSpring(name string, action SpringFunction) Spring {
 	return &springImpl{name: name, action: action, router: NewRouter(false)}
