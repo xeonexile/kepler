@@ -5,6 +5,7 @@ import (
 	"log"
 )
 
+// Pipe is a composition of Spring - Map - Sink. Act as a simple transform block
 type Pipe interface {
 	Spring
 	Sink
@@ -25,7 +26,7 @@ func (p *pipeImpl) Out(ctx context.Context, buf chan Message) <-chan Message {
 	return buf
 }
 
-// In incomming channel
+// In incoming channel
 func (p *pipeImpl) In(ctx context.Context, input <-chan Message) {
 	go func() {
 		for {
@@ -39,7 +40,7 @@ func (p *pipeImpl) In(ctx context.Context, input <-chan Message) {
 				}
 			case <-ctx.Done():
 				log.Println("In Done")
-				//TODO: propogate to attached
+				//TODO: propagate to attached
 				p.router.Close()
 				return
 			}
@@ -69,6 +70,7 @@ func NewPipe(name string, action PipeFunction) Pipe {
 	return &pipeImpl{name: name, action: action, router: NewRouter(false)}
 }
 
+// NewBroadcastPipe creates broadcast pipe
 func NewBroadcastPipe(name string, action PipeFunction) Pipe {
 	return &pipeImpl{name: name, action: action, router: NewRouter(true)}
 }

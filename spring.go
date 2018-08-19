@@ -4,7 +4,7 @@ import (
 	"context"
 )
 
-// Spring of outgong messages
+// Spring of outgong messages, act as producer
 type Spring interface {
 	Out(ctx context.Context, out chan Message) <-chan Message
 	LinkTo(Sink, RouteCondition) (closer func())
@@ -33,8 +33,8 @@ func (s *springImpl) LinkTo(sink Sink, cond RouteCondition) (closer func()) {
 // SpringFunction out generator function
 type SpringFunction func(ctx context.Context, out chan<- Message)
 
-// UnmarshallFunction used to unmarshall spring input to
-type UnmarshallFunction func(in []byte) (Message, error)
+// UnmarshalFunction used to unmarshal spring input to
+type UnmarshalFunction func(in []byte) (Message, error)
 
 // NewSpring creates new Spring
 func NewSpring(name string, action SpringFunction) Spring {

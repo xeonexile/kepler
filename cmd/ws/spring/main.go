@@ -8,7 +8,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/lastexile/kepler"
-	"github.com/lastexile/kepler/spring/ws"
+	"github.com/lastexile/kepler/ws"
 )
 
 func main() {
@@ -18,8 +18,8 @@ func main() {
 
 	url := "wss://abyss-unifeed-develop.marlin.onnisoft.com/ws"
 	url = "ws://localhost:9090/ws"
-	s, err := ws.New(context.Background(), ws.Connection(url), func(d []byte) (kepler.Message, error) {
-		return kepler.NewValueMessage("foo", string(d)), nil
+	s, err := ws.NewSpring(context.Background(), ws.DialConnection(url), func(d []byte) (kepler.Message, error) {
+		return kepler.NewMessage("foo", string(d)), nil
 	}, func(conn *websocket.Conn) {
 		log.Println("connected")
 	})

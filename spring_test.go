@@ -1,14 +1,15 @@
 package kepler
 
 import (
+	"context"
 	"fmt"
 	"testing"
 )
 
 func TestSpringFanout(t *testing.T) {
-	s := NewSpring("range", func(c chan<- Message) {
+	s := NewSpring("range", func(ctx context.Context, c chan<- Message) {
 		for i := 0; i < 10; i++ {
-			c <- NewValueMessage("range", i)
+			c <- NewMessage("range", i)
 		}
 	})
 

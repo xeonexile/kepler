@@ -24,7 +24,7 @@ func main() {
 				log.Println("Done")
 				close(c)
 				return
-			case c <- kepler.NewValueMessage("range", i):
+			case c <- kepler.NewMessage("range", i):
 			}
 		}
 
@@ -35,7 +35,7 @@ func main() {
 				log.Println("Done")
 				close(c)
 				return
-			case c <- kepler.NewValueMessage("range2", i):
+			case c <- kepler.NewMessage("range2", i):
 			}
 		}
 	})

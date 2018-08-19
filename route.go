@@ -7,6 +7,13 @@ import (
 	"sync"
 )
 
+const (
+	// DefaultRouteGroup name
+	DefaultRouteGroup string = "."
+)
+
+// Router responsible for message's routing among connected routes
+//can work in two modes as FanOut and Broadcast
 type Router interface {
 	AddRoute(name string, rc func(m Message) bool) Route
 	RemoveRoute(Route)
@@ -14,11 +21,14 @@ type Router interface {
 	Close()
 }
 
+// Route encapsulates channel-based communication mechanism
 type Route interface {
 	Name() string
 	Buff() chan Message
 	Ctx() context.Context
 	Cond() func(m Message) bool
+
+	// Close current route, and remove it from parent router
 	Close()
 }
 
@@ -145,7 +155,7 @@ func (r *router) broadcast(m Message) int {
 	return 1
 }
 
-// Send message to first free Cond aplicable route
+// Send message to first free Cond applicable route
 func (r *router) Send(m Message) int {
 	r.mx.Lock()
 	defer r.mx.Unlock()
@@ -198,12 +208,19 @@ func (r *router) byCond(m Message) []Route {
 	if m == nil {
 		return empty
 	}
+	res := empty
+	var f string
 	for _, v := range r.routes {
+		f = v[0].Name()
 		if len(v) > 0 && v[0].Cond()(m) {
+			res = v
+			if f == DefaultRouteGroup {
+				continue
+			}
 			return v
 		}
 	}
-	return empty
+	return res
 }
 
 func sendDefault(m Message, in []Route) int {

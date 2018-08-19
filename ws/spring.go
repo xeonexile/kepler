@@ -10,27 +10,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const (
-	// Time allowed to write a message to the peer.
-	writeWait = 10 * time.Second
-
-	// Time allowed to read the next pong message from the peer.
-	pongWait = 60 * time.Second
-
-	// Send pings to peer with this period. Must be less than pongWait.
-	pingPeriod = (pongWait * 9) / 10
-)
-
-// Connection returns based on Default dialer connectionFactory
-func Connection(path string) func() (*websocket.Conn, error) {
-	return func() (*websocket.Conn, error) {
-		conn, _, err := websocket.DefaultDialer.Dial(path, nil)
-		return conn, err
-	}
-}
-
-// New creates instance of web socket spring
-func New(ctx context.Context, connFactory func() (*websocket.Conn, error), formatter kepler.UnmarshallFunction, onConnect func(*websocket.Conn)) (kepler.Spring, error) {
+// NewSpring creates instance of web socket spring. Acts as ws client
+func NewSpring(ctx context.Context, connFactory ConnectionFactoryFunc, formatter kepler.UnmarshalFunction, onConnect func(*websocket.Conn)) (kepler.Spring, error) {
 
 	return kepler.NewSpring("foo", func(ctx context.Context, ch chan<- kepler.Message) {
 		var writeCtx context.Context
@@ -44,7 +25,7 @@ func New(ctx context.Context, connFactory func() (*websocket.Conn, error), forma
 					conn, err = connFactory()
 					if err != nil {
 						log.Errorf("Failed to open the connection: %v \n", err)
-						time.Sleep(10 * time.Second)
+						time.Sleep(connectionRetryInterval)
 						continue
 					}
 
@@ -96,10 +77,4 @@ func writePump(ctx context.Context, conn *websocket.Conn, pingPeriod time.Durati
 			return
 		}
 	}
-}
-
-// write writes a message with the given message type and payload.
-func write(conn *websocket.Conn, mt int, payload []byte) error {
-	conn.SetWriteDeadline(time.Now().Add(writeWait))
-	return conn.WriteMessage(mt, payload)
 }
