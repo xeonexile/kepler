@@ -29,7 +29,7 @@ func main() {
 	})
 
 	if err != nil {
-		log.Fatalf("Unable to create kafkaspring: %v\n", err)
+		log.Fatalf("Unable to create kafkasink: %v\n", err)
 	}
 
 	spring := kepler.NewSpring("odd", func(ctx context.Context, ch chan<- kepler.Message) {
