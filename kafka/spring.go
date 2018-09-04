@@ -31,7 +31,7 @@ func NewSpring(topic string, tail int, commitAfter int, config *kafka.ConfigMap,
 	//var delta Delta
 
 	log.Info("Subscribed to kafka")
-	spring = kepler.NewSpring(topic, func(ctx context.Context, out chan<- kepler.Message) {
+	spring = kepler.NewSpring(func(ctx context.Context, out chan<- kepler.Message) {
 		for {
 			select {
 			case ev := <-c.Events():

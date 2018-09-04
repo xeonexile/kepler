@@ -12,7 +12,6 @@ type Pipe interface {
 }
 
 type pipeImpl struct {
-	name      string
 	action    PipeFunction
 	router    Router
 	broadcast bool
@@ -48,14 +47,9 @@ func (p *pipeImpl) In(ctx context.Context, input <-chan Message) {
 	}()
 }
 
-// Name of this pipe
-func (p *pipeImpl) Name() string {
-	return p.name
-}
-
 // LinkTo add new conditional link
-func (p *pipeImpl) LinkTo(sink Sink, cond RouteCondition) (closer func()) {
-	route := p.router.AddRoute(sink.Name(), cond)
+func (p *pipeImpl) LinkTo(name string, sink Sink, cond RouteCondition) (closer func()) {
+	route := p.router.AddRoute(name, cond)
 
 	//inCtx, inClose := context.WithCancel(route.Ctx())
 
@@ -66,11 +60,11 @@ func (p *pipeImpl) LinkTo(sink Sink, cond RouteCondition) (closer func()) {
 }
 
 // NewPipe creates new instance of pipe with defined transform action
-func NewPipe(name string, action PipeFunction) Pipe {
-	return &pipeImpl{name: name, action: action, router: NewRouter(false)}
+func NewPipe(action PipeFunction) Pipe {
+	return &pipeImpl{action: action, router: NewRouter(false)}
 }
 
 // NewBroadcastPipe creates broadcast pipe
-func NewBroadcastPipe(name string, action PipeFunction) Pipe {
-	return &pipeImpl{name: name, action: action, router: NewRouter(true)}
+func NewBroadcastPipe(action PipeFunction) Pipe {
+	return &pipeImpl{action: action, router: NewRouter(true)}
 }

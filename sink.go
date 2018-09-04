@@ -5,18 +5,16 @@ import (
 	"log"
 )
 
-// Sink is a base endpoint block that consumes incomming message
+// Sink is a base endpoint block that consumes incoming message
 type Sink interface {
-	Name() string
 	In(ctx context.Context, input <-chan Message)
 }
 
 type sinkImpl struct {
-	name   string
 	action SinkFunction
 }
 
-// SinkFunction defines incomming message processing action
+// SinkFunction defines incoming message processing action
 type SinkFunction func(msg Message)
 
 // MarshallerFunc used to serialize Message to bytes
@@ -32,18 +30,14 @@ func (s *sinkImpl) In(ctx context.Context, input <-chan Message) {
 				}
 			case <-ctx.Done():
 				log.Println("Sink Done")
-				//TODO: propogate to attached
+				//TODO: propagate to attached
 				return
 			}
 		}
 	}()
 }
 
-func (s *sinkImpl) Name() string {
-	return s.name
-}
-
 // NewSink creates new instance of sink
-func NewSink(name string, action SinkFunction) Sink {
-	return &sinkImpl{name: name, action: action}
+func NewSink(action SinkFunction) Sink {
+	return &sinkImpl{action: action}
 }

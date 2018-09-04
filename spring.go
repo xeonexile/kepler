@@ -7,7 +7,7 @@ import (
 // Spring of outgong messages, act as producer
 type Spring interface {
 	Out(ctx context.Context, out chan Message) <-chan Message
-	LinkTo(Sink, RouteCondition) (closer func())
+	LinkTo(name string, target Sink, cond RouteCondition) (closer func())
 }
 
 func (s *springImpl) Out(ctx context.Context, o chan Message) <-chan Message {
@@ -19,8 +19,8 @@ func (s *springImpl) Out(ctx context.Context, o chan Message) <-chan Message {
 	return o
 }
 
-func (s *springImpl) LinkTo(sink Sink, cond RouteCondition) (closer func()) {
-	route := s.router.AddRoute(sink.Name(), cond)
+func (s *springImpl) LinkTo(name string, sink Sink, cond RouteCondition) (closer func()) {
+	route := s.router.AddRoute(name, cond)
 
 	//pass linked conext to Sink
 	inCtx, inClose := context.WithCancel(route.Ctx())
@@ -37,12 +37,11 @@ type SpringFunction func(ctx context.Context, out chan<- Message)
 type UnmarshalFunction func(in []byte) (Message, error)
 
 // NewSpring creates new Spring
-func NewSpring(name string, action SpringFunction) Spring {
-	return &springImpl{name: name, action: action, router: NewRouter(false)}
+func NewSpring(action SpringFunction) Spring {
+	return &springImpl{action: action, router: NewRouter(false)}
 }
 
 type springImpl struct {
-	name   string
 	action SpringFunction
 	router Router
 }

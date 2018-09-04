@@ -12,7 +12,7 @@ import (
 // NewSpring - return generic amqp consumer spring
 func NewSpring(connFactory ConnectionFactoryFunc, queue QueueOptions, formatter kepler.UnmarshalFunction) (kepler.Spring, error) {
 
-	return kepler.NewSpring(queue.Name, func(ctx context.Context, out chan<- kepler.Message) {
+	return kepler.NewSpring(func(ctx context.Context, out chan<- kepler.Message) {
 		var conn *amqp.Connection
 		var ch *amqp.Channel
 		var err error
@@ -54,11 +54,11 @@ func NewSpring(connFactory ConnectionFactoryFunc, queue QueueOptions, formatter 
 			}
 			d = <-msgs
 
-			if d.Body == nil {
-				log.Errorf("Consume failed Channel: %v", err)
-				conn, ch = resetConnection(conn, ch)
-				continue
-			}
+			// if d.Body == nil {
+			// 	log.Errorf("Consume failed Channel: %v", err)
+			// 	conn, ch = resetConnection(conn, ch)
+			// 	continue
+			// }
 
 			log.Infof("Received message: %s", d.Body)
 			if msg, err = formatter(d.Body); err != nil {

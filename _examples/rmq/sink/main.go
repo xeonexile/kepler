@@ -19,7 +19,7 @@ func main() {
 
 	url := "amqp://user:pass@localhost:5672"
 
-	q := rmq.QueueOptions{"test", "test", true, true, true, true}
+	q := rmq.QueueOptions{"test_ex", "test", "test", true, true, true, true}
 	s, err := rmq.NewSink(rmq.Connection(url), q, func(m kepler.Message) ([]byte, error) {
 		return []byte(m.Value().(string)), nil
 	})
@@ -27,7 +27,7 @@ func main() {
 		log.Fatalf("Unable to create rmqspring: %v\n", err)
 	}
 
-	spring := kepler.NewSpring("odd", func(ctx context.Context, ch chan<- kepler.Message) {
+	spring := kepler.NewSpring(func(ctx context.Context, ch chan<- kepler.Message) {
 
 		i := 1
 		for {
@@ -38,7 +38,7 @@ func main() {
 		}
 	})
 
-	spring.LinkTo(s, kepler.Allways)
+	spring.LinkTo(".", s, kepler.Allways)
 
 	reader := bufio.NewReader(os.Stdin)
 	log.Print("Enter text: ")

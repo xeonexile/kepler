@@ -16,6 +16,7 @@ type ConnectionFactoryFunc func() (*amqp.Connection, error)
 // QueueOptions defines basic creation parameters
 type QueueOptions struct {
 	Name             string
+	ExchangeName     string
 	ConsumerName     string
 	Durable          bool
 	ExchangeDurable  bool
@@ -46,7 +47,7 @@ func initExchangeChannelQueue(connFactory ConnectionFactoryFunc, queue QueueOpti
 	}
 	log.Infoln("Channel opened")
 	err = ch.ExchangeDeclare(
-		queue.Name,             // name
+		queue.ExchangeName,     // name
 		"topic",                // type
 		queue.ExchangeDurable,  // durable
 		queue.DeleteWhenUnused, // auto-deleted

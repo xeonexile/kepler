@@ -16,10 +16,10 @@ func NewSink(connFactory ConnectionFactoryFunc, queue QueueOptions, formatter ke
 	var err error
 	var data []byte
 
-	return kepler.NewSink(queue.Name, func(msg kepler.Message) {
+	return kepler.NewSink(func(msg kepler.Message) {
 		for {
 			if conn == nil || ch == nil {
-				log.Info(conn)
+				log.Infof("Connection or channel is closed %v - %v\n", conn, ch)
 				for {
 
 					conn, ch, err = initExchangeChannelQueue(connFactory, queue)
@@ -33,11 +33,11 @@ func NewSink(connFactory ConnectionFactoryFunc, queue QueueOptions, formatter ke
 					}
 
 					err = ch.QueueBind(
-						queue.Name,   // name of the queue
-						queue.Name,   // bindingKey
-						queue.Name,   // sourceExchange
-						queue.NoWait, // noWait
-						nil,          // arguments
+						queue.Name,         // name of the queue
+						queue.Name,         // bindingKey
+						queue.ExchangeName, // sourceExchange
+						queue.NoWait,       // noWait
+						nil,                // arguments
 					)
 
 					if err != nil {
@@ -51,16 +51,17 @@ func NewSink(connFactory ConnectionFactoryFunc, queue QueueOptions, formatter ke
 
 			data, err = formatter(msg)
 			err = ch.Publish(
-				queue.Name, // exchange
-				queue.Name, // routing key
-				false,      // mandatory
-				false,      // immediate
+				queue.ExchangeName, // exchange
+				queue.Name,         // routing key
+				false,              // mandatory
+				false,              // immediate
 				amqp.Publishing{
 					ContentType: "text/plain",
 					Body:        data,
 				})
 
 			if err != nil {
+				log.Errorf("Failed to publish: %v\n", err)
 				conn, ch = resetConnection(conn, ch)
 				continue
 			}

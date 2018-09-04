@@ -20,10 +20,9 @@ func NewSink(topic string, config *kafka.ConfigMap, formatter MarshallerFunc) (s
 
 	delivery := make(chan kafka.Event)
 
-	f := func(m kepler.Message) {
+	sink = kepler.NewSink(func(m kepler.Message) {
 		writePipe(m, topic, p, formatter, delivery)
-	}
-	sink = kepler.NewSink(topic, f)
+	})
 
 	return
 }
@@ -40,10 +39,9 @@ func NewPipe(topic string, config *kafka.ConfigMap, formatter MarshallerFunc) (p
 
 	delivery := make(chan kafka.Event)
 
-	f := func(m kepler.Message) kepler.Message {
+	pipe = kepler.NewPipe(func(m kepler.Message) kepler.Message {
 		return writePipe(m, topic, p, formatter, delivery)
-	}
-	pipe = kepler.NewPipe(topic, f)
+	})
 
 	return
 }

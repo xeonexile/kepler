@@ -13,7 +13,7 @@ import (
 // NewSpring creates instance of web socket spring. Acts as ws client
 func NewSpring(ctx context.Context, connFactory ConnectionFactoryFunc, formatter kepler.UnmarshalFunction, onConnect func(*websocket.Conn)) (kepler.Spring, error) {
 
-	return kepler.NewSpring("foo", func(ctx context.Context, ch chan<- kepler.Message) {
+	return kepler.NewSpring(func(ctx context.Context, ch chan<- kepler.Message) {
 		var writeCtx context.Context
 		var writeCancel context.CancelFunc
 		var conn *websocket.Conn

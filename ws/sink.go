@@ -15,7 +15,7 @@ func NewSink(connFactory ConnectionFactoryFunc, formatter kepler.MarshallerFunc,
 	go readPump(conn, onClose)
 	onConnect(conn)
 
-	sink = kepler.NewSink("ws", func(m kepler.Message) {
+	sink = kepler.NewSink(func(m kepler.Message) {
 
 		value, err := formatter(m)
 		if err != nil {
@@ -30,9 +30,15 @@ func NewSink(connFactory ConnectionFactoryFunc, formatter kepler.MarshallerFunc,
 }
 
 func readPump(conn *websocket.Conn, onClose func()) {
+	closeHandler := onClose
 	defer func() {
-		conn.Close()
-		onClose()
+		if conn != nil {
+			conn.Close()
+		}
+
+		if closeHandler != nil {
+			closeHandler()
+		}
 		log.Info("defer close ")
 	}()
 
@@ -51,8 +57,9 @@ func readPump(conn *websocket.Conn, onClose func()) {
 		_, _, err := conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				if onClose != nil {
-					onClose()
+				if closeHandler != nil {
+					closeHandler()
+					closeHandler = nil
 					log.Info("Connection Closed with onClose ")
 				} else {
 					log.Warn("No OnClose handler specified")
