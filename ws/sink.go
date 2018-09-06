@@ -13,6 +13,15 @@ import (
 func NewSink(connFactory ConnectionFactoryFunc, formatter kepler.MarshallerFunc, onConnect func(conn *websocket.Conn), onClose func()) (sink kepler.Sink, err error) {
 	conn, err := connFactory()
 	go readPump(conn, onClose)
+
+	go func() {
+		ticker := time.NewTicker(pingPeriod)
+		for range ticker.C {
+			if write(conn, websocket.PingMessage, []byte{}); err != nil {
+				log.Errorln("PING error: %v\n", err)
+			}
+		}
+	}()
 	onConnect(conn)
 
 	sink = kepler.NewSink(func(m kepler.Message) {
@@ -30,24 +39,15 @@ func NewSink(connFactory ConnectionFactoryFunc, formatter kepler.MarshallerFunc,
 }
 
 func readPump(conn *websocket.Conn, onClose func()) {
-	closeHandler := onClose
-	defer func() {
-		if conn != nil {
-			conn.Close()
-		}
-
-		if closeHandler != nil {
-			closeHandler()
-		}
-		log.Info("defer close ")
-	}()
 
 	conn.SetReadDeadline(time.Now().Add(pongWait))
+
 	conn.SetPingHandler(func(string) error {
 		log.Info("Ping")
 		conn.SetReadDeadline(time.Now().Add(pongWait))
 		return nil
 	})
+
 	conn.SetPongHandler(func(string) error {
 		log.Info("Pong")
 		conn.SetReadDeadline(time.Now().Add(pongWait))
@@ -57,14 +57,16 @@ func readPump(conn *websocket.Conn, onClose func()) {
 		_, _, err := conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				if closeHandler != nil {
-					closeHandler()
-					closeHandler = nil
-					log.Info("Connection Closed with onClose ")
-				} else {
-					log.Warn("No OnClose handler specified")
-				}
+				log.Warnf("Unexpected error: %v\n", err)
 			}
+			if conn != nil {
+				conn.Close()
+			}
+
+			if onClose != nil {
+				onClose()
+			}
+			log.Info("WS Connection closed: %v\n", err)
 			break
 		}
 	}

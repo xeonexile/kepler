@@ -106,8 +106,8 @@ func (r *router) AddRoute(name string, rc func(m Message) bool) Route {
 }
 
 func (r *router) Close() {
-	// r.mx.Lock()
-	// defer r.mx.Unlock()
+	r.mx.Lock()
+	defer r.mx.Unlock()
 
 	for _, rg := range r.routes {
 		for _, ri := range rg {
@@ -119,8 +119,8 @@ func (r *router) Close() {
 }
 
 func (r *router) RemoveRoute(route Route) {
-	// r.mx.Lock()
-	// defer r.mx.Unlock()
+	r.mx.Lock()
+	defer r.mx.Unlock()
 
 	if rg, ok := r.routes[route.Name()]; ok {
 		var nrg []Route
@@ -145,9 +145,7 @@ var (
 )
 
 func (r *router) broadcast(m Message) int {
-	//r.mx.Lock()
 	routes := r.byCond(m)
-	//r.mx.Unlock()
 
 	for _, rt := range routes {
 		rt.Buff() <- m
@@ -209,12 +207,10 @@ func (r *router) byCond(m Message) []Route {
 		return empty
 	}
 	res := empty
-	var f string
 	for _, v := range r.routes {
-		f = v[0].Name()
 		if len(v) > 0 && v[0].Cond()(m) {
 			res = v
-			if f == DefaultRouteGroup {
+			if v[0].Name() == DefaultRouteGroup {
 				continue
 			}
 			return v

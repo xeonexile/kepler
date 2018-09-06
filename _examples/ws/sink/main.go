@@ -19,7 +19,7 @@ func main() {
 
 	log.Println("starting...")
 
-	spring := kepler.NewSpring("odd", func(ctx context.Context, ch chan<- kepler.Message) {
+	spring := kepler.NewSpring(func(ctx context.Context, ch chan<- kepler.Message) {
 
 		i := 1
 		for {
@@ -30,9 +30,9 @@ func main() {
 		}
 	})
 
-	broadcaster := kepler.NewBroadcastPipe("all", func(in kepler.Message) kepler.Message { return in })
+	broadcaster := kepler.NewBroadcastPipe(func(in kepler.Message) kepler.Message { return in })
 
-	spring.LinkTo(broadcaster, kepler.Allways)
+	spring.LinkTo(".", broadcaster, kepler.Allways)
 
 	url := "wss://abyss-unifeed-develop.marlin.onnisoft.com"
 	url = "localhost:9090"
@@ -50,13 +50,18 @@ func main() {
 		// each ws connection is mapped to WsSink linked to broadcaster
 		log.Println("opening connection")
 
+		var closer func()
+
+		onClose := func() {
+			log.Println("closing")
+			closer()
+			log.Println("close")
+		}
 		sink, _ := ws.NewSink(ws.ServeConnection(w, r), ws.JsonValue, func(c *websocket.Conn) {
 			ws.SendTextMessage(c, []byte("hi"))
-		}, func() {
-			log.Println("close")
-		})
+		}, onClose)
 
-		broadcaster.LinkTo(sink, kepler.Allways)
+		closer = broadcaster.LinkTo(".", sink, kepler.Allways)
 
 	})
 
