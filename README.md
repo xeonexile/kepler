@@ -5,14 +5,19 @@ You can combine computational pipelines using predefined subset of Springs and S
 
 Spring -> Pipe -> Sink
 
+## LinkTo
+
 Each link could be conditional
 
 Each Spring could be connected to multiple Sinks. If there multiple links share the same name
 
-s.linkTo("odd", odd1, OddPredicate)
+```golang
+s.linkTo("odd", odd1, func(m kepler.Message) bool { return m.Value().(int)%2 != 0 })
 
-s.linkTo("odd", odd2, OddPredicate)
+s.linkTo("odd", odd2, func(m kepler.Message) bool { return m.Value().(int)%2 != 0 })
 
+s.linkTo(".", other, kepler.Allways) // default route case
+```
 then messages will be passed in RoundRobin scenario. 
 
 ## Pipe
