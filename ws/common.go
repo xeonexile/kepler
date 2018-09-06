@@ -61,7 +61,7 @@ func ServeConnection(w http.ResponseWriter, r *http.Request) func() (*websocket.
 	}
 }
 
-// JsonValue return default json marshal data
-func JsonValue(msg kepler.Message) ([]byte, error) {
+// JSONValue return default json marshal data
+func JSONValue(msg kepler.Message) ([]byte, error) {
 	return json.Marshal(msg.Value())
 }

@@ -39,9 +39,17 @@ func NewSink(connFactory ConnectionFactoryFunc, formatter kepler.MarshallerFunc,
 }
 
 func readPump(conn *websocket.Conn, onClose func()) {
+	defer func() {
+		if conn != nil {
+			conn.Close()
+		}
+
+		if onClose != nil {
+			onClose()
+		}
+	}()
 
 	conn.SetReadDeadline(time.Now().Add(pongWait))
-
 	conn.SetPingHandler(func(string) error {
 		log.Info("Ping")
 		conn.SetReadDeadline(time.Now().Add(pongWait))
@@ -57,14 +65,7 @@ func readPump(conn *websocket.Conn, onClose func()) {
 		_, _, err := conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Warnf("Unexpected error: %v\n", err)
-			}
-			if conn != nil {
-				conn.Close()
-			}
-
-			if onClose != nil {
-				onClose()
+				log.Warnf("WS Connection UnexpectedCloseError: %v\n", err)
 			}
 			log.Info("WS Connection closed: %v\n", err)
 			break

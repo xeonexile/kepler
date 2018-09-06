@@ -24,7 +24,7 @@ func main() {
 				log.Println("Done")
 				close(c)
 				return
-			case c <- kepler.NewMessage("range", i):
+			case c <- kepler.NewMessage("range", []int{i, i + 1, i + 2}):
 			}
 		}
 
@@ -35,21 +35,30 @@ func main() {
 				log.Println("Done")
 				close(c)
 				return
-			case c <- kepler.NewMessage("range2", i):
+			case c <- kepler.NewMessage("range2", []int{i, i + 1, i + 2, i + 3}):
 			}
 		}
 	})
 
-	mux := kepler.NewBroadcastPipe(func(m kepler.Message) kepler.Message {
-		log.Println("mux: " + m.String())
-		return m
+	roll := kepler.NewRoll(func(m kepler.Message) (res []kepler.Message) {
+		for _, v := range m.Value().([]int) {
+			res = append(res, kepler.NewMessage(m.Topic(), v))
+		}
+		return
 	})
 
-	// t1 := kepler.NewSink("t", func(m kepler.Message) {
-	// 	log.Println("t1_1>: " + m.String())
-	// 	time.Sleep(4 * time.Second)
-	// 	log.Println("t1_1<: " + m.String())
+	s.LinkTo(".", roll, kepler.Allways)
+	// mux := kepler.NewBroadcastPipe(func(m kepler.Message) kepler.Message {
+	// 	log.Println("mux: " + m.String())
+	// 	return m
 	// })
+
+	t1 := kepler.NewSink(func(m kepler.Message) {
+		time.Sleep(4 * time.Second)
+		log.Println("t1: " + m.String())
+	})
+
+	roll.LinkTo(".", t1, kepler.Allways)
 
 	// t2 := kepler.NewSink("t", func(m kepler.Message) {
 	// 	log.Println("t1_2>: " + m.String())
@@ -57,34 +66,10 @@ func main() {
 	// 	log.Println("t1_2<: " + m.String())
 	// })
 
-	var even [3]kepler.Sink
-	for i, _ := range even {
-		name := fmt.Sprintf("even_%v", i)
-		even[i] = kepler.NewSink(func(m kepler.Message) {
-			log.Println(name + "> " + m.String())
-			time.Sleep(3 * time.Second)
-			log.Println(name + "< " + m.String())
-		})
+	//closeMux := s.LinkTo(".", mux, kepler.Allways)
 
-		mux.LinkTo("even", even[i], func(m kepler.Message) bool { return m.Value().(int)%2 == 0 })
-	}
-
-	var odd [8]kepler.Sink
-	for i, _ := range odd {
-		name := fmt.Sprintf("odd_%v", i)
-		odd[i] = kepler.NewSink(func(m kepler.Message) {
-			log.Println(name + "> " + m.String())
-			time.Sleep(10 * time.Second)
-			log.Println(name + "< " + m.String())
-		})
-
-		mux.LinkTo("odd", odd[i], func(m kepler.Message) bool { return m.Value().(int)%2 != 0 })
-	}
-
-	closeMux := s.LinkTo(".", mux, kepler.Allways)
-
-	time.Sleep(10 * time.Second)
-	closeMux()
+	//time.Sleep(10 * time.Second)
+	//closeMux()
 	//p.LinkTo(t2, func(m kepler.Message) bool { return m.Value().(int) > 5 })
 	// mux.LinkTo(t3, func(m kepler.Message) bool { return m.Value().(int)%3 == 0 })
 	// mux.LinkTo(t4, func(m kepler.Message) bool { return m.Value().(int)%3 == 0 })
