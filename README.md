@@ -10,6 +10,7 @@ Each link could be conditional
 Each Spring could be connected to multiple Sinks. If there multiple links share the same name
 
 s.linkTo("odd", odd1, OddPredicate)
+
 s.linkTo("odd", odd2, OddPredicate)
 
 then messages will be passed in RoundRobin scenario. 
