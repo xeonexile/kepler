@@ -51,13 +51,13 @@ func readPump(conn *websocket.Conn, onClose func()) {
 
 	conn.SetReadDeadline(time.Now().Add(pongWait))
 	conn.SetPingHandler(func(string) error {
-		log.Info("Ping")
+		log.Debug("Ping")
 		conn.SetReadDeadline(time.Now().Add(pongWait))
 		return nil
 	})
 
 	conn.SetPongHandler(func(string) error {
-		log.Info("Pong")
+		log.Debug("Pong")
 		conn.SetReadDeadline(time.Now().Add(pongWait))
 		return nil
 	})
