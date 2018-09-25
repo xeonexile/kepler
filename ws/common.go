@@ -2,6 +2,7 @@ package ws
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"time"
 
@@ -49,7 +50,9 @@ func write(conn *websocket.Conn, mt int, payload []byte) error {
 // DialConnection returns based on Default dialer connectionFactory
 func DialConnection(path string) func() (*websocket.Conn, error) {
 	return func() (*websocket.Conn, error) {
-		conn, _, err := websocket.DefaultDialer.Dial(path, nil)
+		conn, hr, err := websocket.DefaultDialer.Dial(path, nil)
+
+		log.Println(hr.Status)
 		return conn, err
 	}
 }

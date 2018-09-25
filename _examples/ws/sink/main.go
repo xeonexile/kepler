@@ -34,17 +34,7 @@ func main() {
 
 	spring.LinkTo(".", broadcaster, kepler.Allways)
 
-	url := "wss://abyss-unifeed-develop.marlin.onnisoft.com"
-	url = "localhost:9090"
-
-	go func() {
-		err := http.ListenAndServe(url, nil)
-		if err != nil {
-			log.Fatal("Listen and serve error: ", err)
-		} else {
-			log.Println("ListenAndServe on: " + url)
-		}
-	}()
+	url := "localhost:9090"
 
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		// each ws connection is mapped to WsSink linked to broadcaster
@@ -57,13 +47,22 @@ func main() {
 			closer()
 			log.Println("close")
 		}
-		sink, _ := ws.NewSink(ws.ServeConnection(w, r), ws.JsonValue, func(c *websocket.Conn) {
+		sink, _ := ws.NewSink(ws.ServeConnection(w, r), ws.JSONValue, func(c *websocket.Conn) {
 			ws.SendTextMessage(c, []byte("hi"))
 		}, onClose)
 
 		closer = broadcaster.LinkTo(".", sink, kepler.Allways)
 
 	})
+
+	go func() {
+		err := http.ListenAndServe(url, nil)
+		if err != nil {
+			log.Fatal("Listen and serve error: ", err)
+		} else {
+			log.Println("ListenAndServe on: " + url)
+		}
+	}()
 
 	reader := bufio.NewReader(os.Stdin)
 	log.Print("Enter text: ")
