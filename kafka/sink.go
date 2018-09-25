@@ -47,7 +47,7 @@ func NewPipe(topic string, config *kafka.ConfigMap, formatter MarshallerFunc) (p
 }
 
 func writePipe(m kepler.Message, topic string, p *kafka.Producer, formatter MarshallerFunc, delivery chan kafka.Event) kepler.Message {
-	value, err := formatter(m)
+	value, key, err := formatter(m)
 	if err != nil {
 		log.Error("Unable to marshall message")
 		return nil
@@ -55,6 +55,7 @@ func writePipe(m kepler.Message, topic string, p *kafka.Producer, formatter Mars
 	msg := &kafka.Message{
 		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
 		Value:          value,
+		Key:            key,
 	}
 	for {
 		if err := p.Produce(msg, delivery); err != nil {

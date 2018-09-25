@@ -24,15 +24,15 @@ func main() {
 		"default.topic.config": kafka.ConfigMap{"auto.offset.reset": "earliest"},
 	}
 
-	s, err := kkafka.NewSink("test", cfg, func(m kepler.Message) ([]byte, error) {
-		return []byte(m.Value().(string)), nil
+	s, err := kkafka.NewSink("test", cfg, func(m kepler.Message) ([]byte, []byte, error) {
+		return []byte(m.Value().(string)), []byte(strconv.Itoa(1)), nil
 	})
 
 	if err != nil {
 		log.Fatalf("Unable to create kafkasink: %v\n", err)
 	}
 
-	spring := kepler.NewSpring("odd", func(ctx context.Context, ch chan<- kepler.Message) {
+	spring := kepler.NewSpring(func(ctx context.Context, ch chan<- kepler.Message) {
 
 		i := 1
 		for {
@@ -43,7 +43,7 @@ func main() {
 		}
 	})
 
-	spring.LinkTo(s, kepler.Allways)
+	spring.LinkTo(".", s, kepler.Allways)
 
 	reader := bufio.NewReader(os.Stdin)
 	log.Print("Enter text: ")

@@ -31,12 +31,12 @@ func main() {
 		log.Fatalf("Unable to create kafkaspring: %v\n", err)
 	}
 
-	logSink := kepler.NewSink("odd", func(m kepler.Message) {
+	logSink := kepler.NewSink(func(m kepler.Message) {
 
 		log.Println(m.String())
 	})
 
-	s.LinkTo(logSink, kepler.Allways)
+	s.LinkTo(".", logSink, kepler.Allways)
 
 	reader := bufio.NewReader(os.Stdin)
 	log.Print("Enter text: ")

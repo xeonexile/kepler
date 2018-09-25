@@ -9,7 +9,7 @@ import (
 )
 
 // MarshallerFunc used to serialize Message to bytes
-type MarshallerFunc func(m kepler.Message) ([]byte, error)
+type MarshallerFunc func(m kepler.Message) ([]byte, []byte, error)
 
 // default connection retry interval
 const connectionRetryInterval = 10 * time.Second
