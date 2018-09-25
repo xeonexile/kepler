@@ -96,9 +96,11 @@ var (
 func (r *router) broadcast(m Message) int {
 	routes := r.byCond(m)
 
-	for _, rt := range routes {
-		rt.Buff() <- m
-	}
+	go func() {
+		for _, rt := range routes {
+			rt.Buff() <- m
+		}
+	}()
 	return 1
 }
 
