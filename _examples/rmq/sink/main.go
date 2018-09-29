@@ -1,10 +1,8 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"log"
-	"os"
 	"strconv"
 	"time"
 
@@ -40,8 +38,5 @@ func main() {
 
 	spring.LinkTo(".", s, kepler.Allways)
 
-	reader := bufio.NewReader(os.Stdin)
-	log.Print("Enter text: ")
-	text, _ := reader.ReadString('\n')
-	log.Println(text)
+	kepler.Await()
 }

@@ -1,11 +1,9 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 	"time"
 
@@ -64,8 +62,5 @@ func main() {
 		}
 	}()
 
-	reader := bufio.NewReader(os.Stdin)
-	log.Print("Enter text: ")
-	text, _ := reader.ReadString('\n')
-	log.Println(text)
+	kepler.Await()
 }

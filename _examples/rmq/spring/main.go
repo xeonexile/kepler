@@ -1,9 +1,7 @@
 package main
 
 import (
-	"bufio"
 	"log"
-	"os"
 
 	"github.com/lastexile/kepler"
 	"github.com/lastexile/kepler/rmq"
@@ -31,8 +29,5 @@ func main() {
 
 	s.LinkTo(".", logSink, kepler.Allways)
 
-	reader := bufio.NewReader(os.Stdin)
-	log.Print("Enter text: ")
-	text, _ := reader.ReadString('\n')
-	log.Println(text)
+	kepler.Await()
 }

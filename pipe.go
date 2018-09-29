@@ -50,12 +50,7 @@ func (p *pipeImpl) In(ctx context.Context, input <-chan Message) {
 // LinkTo add new conditional link
 func (p *pipeImpl) LinkTo(name string, sink Sink, cond RouteCondition) (closer func()) {
 	route := p.router.AddRoute(name, cond)
-
-	//inCtx, inClose := context.WithCancel(route.Ctx())
-
-	//pass to target sink route context
 	sink.In(route.Ctx(), p.Out(nil, route.Buff()))
-
 	return func() { route.Close() }
 }
 

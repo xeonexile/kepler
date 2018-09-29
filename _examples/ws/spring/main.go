@@ -1,10 +1,8 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"log"
-	"os"
 
 	"github.com/gorilla/websocket"
 	"github.com/lastexile/kepler"
@@ -34,8 +32,5 @@ func main() {
 
 	s.LinkTo(".", logSink, kepler.Allways)
 
-	reader := bufio.NewReader(os.Stdin)
-	log.Print("Enter text: ")
-	text, _ := reader.ReadString('\n')
-	log.Println(text)
+	kepler.Await()
 }
