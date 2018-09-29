@@ -1,7 +1,6 @@
 package kepler
 
 import (
-	"log"
 	"reflect"
 	"sync"
 )
@@ -197,13 +196,10 @@ func send1(m Message, in ...chan Message) int {
 func send2(m Message, in ...chan Message) int {
 	select {
 	case in[0] <- m:
-		log.Print("2 done 0")
 		return 0
 	case in[1] <- m:
-		log.Print("2 done 1")
 		return 1
 	default:
-		//log.Print("2 wait")
 		return -1
 	}
 }
