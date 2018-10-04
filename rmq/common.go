@@ -18,6 +18,7 @@ type QueueOptions struct {
 	Name             string
 	ExchangeName     string
 	ConsumerName     string
+	RoutingKey       string
 	Durable          bool
 	ExchangeDurable  bool
 	DeleteWhenUnused bool
