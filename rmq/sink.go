@@ -34,7 +34,7 @@ func NewSink(connFactory ConnectionFactoryFunc, queue QueueOptions, formatter ke
 
 					err = ch.QueueBind(
 						queue.Name,         // name of the queue
-						queue.Name,         // bindingKey
+						queue.RoutingKey,   // bindingKey
 						queue.ExchangeName, // sourceExchange
 						queue.NoWait,       // noWait
 						nil,                // arguments
@@ -52,7 +52,7 @@ func NewSink(connFactory ConnectionFactoryFunc, queue QueueOptions, formatter ke
 			data, err = formatter(msg)
 			err = ch.Publish(
 				queue.ExchangeName, // exchange
-				queue.Name,         // routing key
+				queue.RoutingKey,   // routing key
 				false,              // mandatory
 				false,              // immediate
 				amqp.Publishing{
