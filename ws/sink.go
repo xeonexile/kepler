@@ -1,44 +1,28 @@
 package ws
 
 import (
-	"sync"
 	"time"
 
+	"github.com/gorilla/websocket"
 	"github.com/lastexile/kepler"
 	log "github.com/sirupsen/logrus"
-
-	"github.com/gorilla/websocket"
 )
 
 // NewSink creates new WS outgoing sink. Acts as the ws server endpoint
 func NewSink(connFactory ConnectionFactoryFunc, formatter kepler.MarshallerFunc, onConnect func(conn *websocket.Conn), onClose func()) (sink kepler.Sink, err error) {
 	conn, err := connFactory()
-	var writeMux = &sync.Mutex{}
 	go readPump(conn, onClose)
 
-	go func() {
-		ticker := time.NewTicker(pingPeriod)
-		for range ticker.C {
-			writeMux.Lock()
-			if write(conn, websocket.PingMessage, []byte{}); err != nil {
-				log.Errorf("PING error: %v\n", err)
-			}
-			writeMux.Unlock()
-		}
-	}()
 	onConnect(conn)
 
 	sink = kepler.NewSink(func(m kepler.Message) {
-
 		value, err := formatter(m)
 		if err != nil {
 			log.Error("Unable to marshall message value")
 			return
 		}
 
-		writeMux.Lock()
 		SendTextMessage(conn, value)
-		writeMux.Unlock()
 	})
 
 	return
@@ -55,7 +39,6 @@ func readPump(conn *websocket.Conn, onClose func()) {
 		}
 	}()
 
-	conn.SetReadDeadline(time.Now().Add(pongWait))
 	conn.SetPingHandler(func(string) error {
 		log.Debug("Ping")
 		conn.SetReadDeadline(time.Now().Add(pongWait))
@@ -64,7 +47,7 @@ func readPump(conn *websocket.Conn, onClose func()) {
 
 	conn.SetPongHandler(func(string) error {
 		log.Debug("Pong")
-		conn.SetReadDeadline(time.Now().Add(pongWait))
+		conn.SetWriteDeadline(time.Now().Add(pongWait))
 		return nil
 	})
 	for {
