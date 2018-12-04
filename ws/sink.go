@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"sync"
 	"time"
 
 	"github.com/lastexile/kepler"
@@ -12,14 +13,17 @@ import (
 // NewSink creates new WS outgoing sink. Acts as the ws server endpoint
 func NewSink(connFactory ConnectionFactoryFunc, formatter kepler.MarshallerFunc, onConnect func(conn *websocket.Conn), onClose func()) (sink kepler.Sink, err error) {
 	conn, err := connFactory()
+	var writeMux = &sync.Mutex{}
 	go readPump(conn, onClose)
 
 	go func() {
 		ticker := time.NewTicker(pingPeriod)
 		for range ticker.C {
+			writeMux.Lock()
 			if write(conn, websocket.PingMessage, []byte{}); err != nil {
-				log.Errorln("PING error: %v\n", err)
+				log.Errorf("PING error: %v\n", err)
 			}
+			writeMux.Unlock()
 		}
 	}()
 	onConnect(conn)
@@ -32,7 +36,9 @@ func NewSink(connFactory ConnectionFactoryFunc, formatter kepler.MarshallerFunc,
 			return
 		}
 
+		writeMux.Lock()
 		SendTextMessage(conn, value)
+		writeMux.Unlock()
 	})
 
 	return
