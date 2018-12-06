@@ -39,7 +39,7 @@ type ConnectionFactoryFunc func() (*websocket.Conn, error)
 // SendTextMessage data over opened conn
 func SendTextMessage(conn *websocket.Conn, payload []byte) error {
 	if len(payload) == 0 {
-        	return nil 
+		return nil
 	}
 	return write(conn, websocket.TextMessage, payload)
 }
