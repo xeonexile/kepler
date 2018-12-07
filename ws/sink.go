@@ -10,8 +10,17 @@ import (
 
 // NewSink creates new WS outgoing sink. Acts as the ws server endpoint
 func NewSink(connFactory ConnectionFactoryFunc, formatter kepler.MarshallerFunc, onConnect func(conn *websocket.Conn), onClose func()) (sink kepler.Sink, err error) {
+	return create(connFactory, formatter, onConnect, nil, onClose)
+}
+
+// NewCommandSink creates new WS outgoing sink, that can accept incoming commands Acts as the ws server endpoint
+func NewCommandSink(connFactory ConnectionFactoryFunc, formatter kepler.MarshallerFunc, onConnect func(conn *websocket.Conn), onCmd func(cmd []byte), onClose func()) (sink kepler.Sink, err error) {
+	return create(connFactory, formatter, onConnect, onCmd, onClose)
+}
+
+func create(connFactory ConnectionFactoryFunc, formatter kepler.MarshallerFunc, onConnect func(conn *websocket.Conn), onCmd func(cmd []byte), onClose func()) (sink kepler.Sink, err error) {
 	conn, err := connFactory()
-	go readPump(conn, onClose)
+	go readPump(conn, onCmd, onClose)
 
 	onConnect(conn)
 
@@ -28,7 +37,7 @@ func NewSink(connFactory ConnectionFactoryFunc, formatter kepler.MarshallerFunc,
 	return
 }
 
-func readPump(conn *websocket.Conn, onClose func()) {
+func readPump(conn *websocket.Conn, onCmd func(cmd []byte), onClose func()) {
 	defer func() {
 		if conn != nil {
 			conn.Close()
@@ -51,13 +60,17 @@ func readPump(conn *websocket.Conn, onClose func()) {
 		return nil
 	})
 	for {
-		_, _, err := conn.ReadMessage()
+		_, data, err := conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				log.Warnf("WS Connection UnexpectedCloseError: %v\n", err)
 			}
 			log.Info("WS Connection closed: %v\n", err)
 			break
+		}
+
+		if onCmd != nil {
+			onCmd(data)
 		}
 	}
 }
