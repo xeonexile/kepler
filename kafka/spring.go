@@ -9,7 +9,7 @@ import (
 )
 
 // NewSpring creates new transient kafka pipe
-func NewSpring(topic string, tail int, commitAfter int, config *kafka.ConfigMap, formatter kepler.UnmarshalFunction) (spring kepler.Spring, err error) {
+func NewSpring(topic string, tail int, commitAfter int, config *kafka.ConfigMap, formatter UnmarshalFunction) (spring kepler.Spring, err error) {
 
 	log.Debug("creating KafkaSpring")
 	c, err := kafka.NewConsumer(config)
@@ -68,7 +68,7 @@ func NewSpring(topic string, tail int, commitAfter int, config *kafka.ConfigMap,
 				case *kafka.Message:
 					log.Infof("Partition loaded: %v\n", e.TopicPartition)
 					var msg kepler.Message
-					if msg, err = formatter(e.Value); err != nil {
+					if msg, err = formatter(e); err != nil {
 						log.Error("Error: %v", err)
 						log.Error("Skip invalid delta: %v", string(e.Value))
 						continue

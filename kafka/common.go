@@ -5,17 +5,16 @@ import (
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/lastexile/kepler"
-	"github.com/streadway/amqp"
 )
 
 // MarshallerFunc used to serialize Message to bytes
 type MarshallerFunc func(m kepler.Message) ([]byte, []byte, error)
 
+// UnmarshalFunction used to translate kafka Message to kepler
+type UnmarshalFunction func(in *kafka.Message) (kepler.Message, error)
+
 // default connection retry interval
 const connectionRetryInterval = 10 * time.Second
-
-// ConnectionFactoryFunc returns opened connection
-type ConnectionFactoryFunc func() (*amqp.Connection, error)
 
 func ensureDeliveryTimeouts(config *kafka.ConfigMap) *kafka.ConfigMap {
 	config.SetKey("api.version.request", "false")

@@ -21,8 +21,8 @@ func main() {
 		"default.topic.config":            kafka.ConfigMap{"auto.offset.reset": "earliest"},
 	}
 
-	s, err := kkafka.NewSpring("test", 0, 0, cfg, func(d []byte) (kepler.Message, error) {
-		return kepler.NewMessage("foo", string(d)), nil
+	s, err := kkafka.NewSpring("test", 0, 0, cfg, func(m *kafka.Message) (kepler.Message, error) {
+		return kepler.NewMessage("foo", string(m.Value)), nil
 	})
 
 	if err != nil {
