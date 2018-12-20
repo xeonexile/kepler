@@ -66,7 +66,6 @@ func NewSpring(topic string, tail int, commitAfter int, config *kafka.ConfigMap,
 				case kafka.RevokedPartitions:
 					c.Unassign()
 				case *kafka.Message:
-					log.Infof("Partition loaded: %v\n", e.TopicPartition)
 					var msg kepler.Message
 					if msg, err = formatter(e); err != nil {
 						log.Error("Error: %v", err)
@@ -81,7 +80,7 @@ func NewSpring(topic string, tail int, commitAfter int, config *kafka.ConfigMap,
 						counter = 0
 					}
 				case kafka.PartitionEOF:
-					log.Printf("EOF Reached %v\n", e)
+					//log.Printf("EOF Reached %v\n", e)
 				case kafka.Error:
 					log.Printf("Error: %v\n", e)
 					break
